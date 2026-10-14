@@ -1,8 +1,11 @@
 package it.taraborrelli.rubrica;
 
+import it.taraborrelli.rubrica.gui.FinestraLogin;
 import it.taraborrelli.rubrica.gui.FinestraPrincipale;
+import it.taraborrelli.rubrica.logica.Autenticazione;
 import it.taraborrelli.rubrica.logica.Rubrica;
 import it.taraborrelli.rubrica.persistenza.FilePersonaDao;
+import it.taraborrelli.rubrica.persistenza.FileUtenteDao;
 import it.taraborrelli.rubrica.persistenza.PersistenzaException;
 
 import javax.swing.JOptionPane;
@@ -15,6 +18,7 @@ import java.net.URISyntaxException;
 public class Main {
 
     private static final String FILE_PERSONE = "informazioni.txt";
+    private static final String FILE_UTENTI = "utenti.txt";
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Main::avvia);
@@ -22,15 +26,18 @@ public class Main {
 
     private static void avvia() {
         impostaAspetto();
-        Rubrica rubrica = new Rubrica(new FilePersonaDao(new File(cartellaApplicazione(), FILE_PERSONE)));
+        File cartella = cartellaApplicazione();
+        Rubrica rubrica = new Rubrica(new FilePersonaDao(new File(cartella, FILE_PERSONE)));
+        Autenticazione autenticazione = new Autenticazione(new FileUtenteDao(new File(cartella, FILE_UTENTI)));
         try {
+            autenticazione.creaUtenteIniziale();
             rubrica.carica();
-            new FinestraPrincipale(rubrica).setVisible(true);
         } catch (PersistenzaException e) {
             // Aprire una rubrica vuota farebbe credere che i dati siano andati persi
             JOptionPane.showMessageDialog(null, e.getMessage(), "Rubrica", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
+        new FinestraLogin(autenticazione, () -> new FinestraPrincipale(rubrica).setVisible(true)).setVisible(true);
     }
 
     /**
