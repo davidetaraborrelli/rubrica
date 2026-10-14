@@ -19,6 +19,8 @@ import java.net.URL;
  */
 class BarraStrumenti extends JToolBar {
 
+    private static final long serialVersionUID = 1L;
+
     // Lato delle icone sullo schermo; i file sono a risoluzione doppia, 36 px
     private static final int LATO_ICONE = 18;
 

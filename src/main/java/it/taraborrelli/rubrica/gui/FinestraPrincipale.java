@@ -19,6 +19,8 @@ import java.awt.event.MouseEvent;
  */
 public class FinestraPrincipale extends JFrame {
 
+    private static final long serialVersionUID = 1L;
+
     private final Rubrica rubrica;
     private final PersonaTableModel modello;
     private final JTable tabella;

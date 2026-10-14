@@ -28,6 +28,7 @@ import java.util.List;
  */
 public class EditorPersona extends JDialog {
 
+    private static final long serialVersionUID = 1L;
     private static final int ETA_MASSIMA = 150;
 
     private final Rubrica rubrica;

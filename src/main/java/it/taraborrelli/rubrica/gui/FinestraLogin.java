@@ -18,11 +18,13 @@ import java.awt.Insets;
 import java.util.Arrays;
 
 /**
- * Finestra di accesso, la sola mostrata all'avvio. Con credenziali corrette si chiude ed esegue
- * l'azione ricevuta, che apre la finestra principale; con credenziali errate segnala l'errore e
- * resta aperta.
+ * Finestra di accesso, la sola mostrata all'avvio, con il pulsante LOGIN nella barra degli
+ * strumenti. Con credenziali corrette si chiude ed esegue l'azione ricevuta, che apre la finestra
+ * principale; con credenziali errate segnala l'errore e resta aperta.
  */
 public class FinestraLogin extends JFrame {
+
+    private static final long serialVersionUID = 1L;
 
     private final Autenticazione autenticazione;
     private final Runnable dopoAccesso;
@@ -38,8 +40,8 @@ public class FinestraLogin extends JFrame {
         this.autenticazione = autenticazione;
         this.dopoAccesso = dopoAccesso;
 
+        add(creaBarraStrumenti(), BorderLayout.NORTH);
         add(creaModulo(), BorderLayout.CENTER);
-        add(creaPulsante(), BorderLayout.SOUTH);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
         pack();
@@ -71,14 +73,11 @@ public class FinestraLogin extends JFrame {
         modulo.add(campo, vincoli);
     }
 
-    private JPanel creaPulsante() {
-        JButton login = new JButton("LOGIN");
-        login.addActionListener(e -> accedi());
+    private BarraStrumenti creaBarraStrumenti() {
+        BarraStrumenti barra = new BarraStrumenti();
+        JButton login = barra.aggiungiPulsante("LOGIN", "login.png", e -> accedi());
         getRootPane().setDefaultButton(login);
-
-        JPanel pulsante = new JPanel();
-        pulsante.add(login);
-        return pulsante;
+        return barra;
     }
 
     private void accedi() {

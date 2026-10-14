@@ -47,7 +47,7 @@ public class ConfigurazioneDatabase {
         try {
             String testo = new String(Files.readAllBytes(file.toPath()), UTF_8);
             // Alcuni editor aggiungono il BOM UTF-8, che finirebbe nel nome della prima chiave
-            if (testo.startsWith("﻿")) {
+            if (testo.startsWith("\uFEFF")) {
                 testo = testo.substring(1);
             }
             proprieta.load(new StringReader(testo));

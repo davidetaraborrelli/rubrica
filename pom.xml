@@ -100,11 +100,16 @@
                                         <exclude>META-INF/*.RSA</exclude>
                                     </excludes>
                                 </filter>
-                                <!-- Resta il manifest di Rubrica.jar, quello con Main-Class -->
+                                <!-- Resta il manifest di Rubrica.jar, quello con Main-Class. Della documentazione
+                                     del driver resta solo il LICENSE -->
                                 <filter>
                                     <artifact>com.mysql:mysql-connector-j</artifact>
                                     <excludes>
                                         <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>README</exclude>
+                                        <exclude>CONTRIBUTING.md</exclude>
+                                        <exclude>INFO_BIN</exclude>
+                                        <exclude>INFO_SRC</exclude>
                                     </excludes>
                                 </filter>
                                 <filter>
