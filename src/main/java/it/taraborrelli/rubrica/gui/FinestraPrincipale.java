@@ -4,10 +4,8 @@ import it.taraborrelli.rubrica.logica.Rubrica;
 import it.taraborrelli.rubrica.modello.Persona;
 import it.taraborrelli.rubrica.persistenza.PersistenzaException;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
@@ -16,7 +14,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Finestra principale: la tabella delle persone e i comandi Nuovo, Modifica, Elimina.
+ * Finestra principale: la tabella delle persone e, in alto, la barra con i comandi Nuovo, Modifica,
+ * Elimina.
  */
 public class FinestraPrincipale extends JFrame {
 
@@ -39,26 +38,19 @@ public class FinestraPrincipale extends JFrame {
             }
         });
 
+        add(creaBarraStrumenti(), BorderLayout.NORTH);
         add(new JScrollPane(tabella), BorderLayout.CENTER);
-        add(creaPulsanti(), BorderLayout.SOUTH);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(600, 400);
         setLocationRelativeTo(null);
     }
 
-    private JPanel creaPulsanti() {
-        JButton nuovo = new JButton("Nuovo");
-        JButton modifica = new JButton("Modifica");
-        JButton elimina = new JButton("Elimina");
-        nuovo.addActionListener(e -> nuovo());
-        modifica.addActionListener(e -> modifica());
-        elimina.addActionListener(e -> elimina());
-
-        JPanel pulsanti = new JPanel();
-        pulsanti.add(nuovo);
-        pulsanti.add(modifica);
-        pulsanti.add(elimina);
-        return pulsanti;
+    private BarraStrumenti creaBarraStrumenti() {
+        BarraStrumenti barra = new BarraStrumenti();
+        barra.aggiungiPulsante("Nuovo", "nuovo.png", e -> nuovo());
+        barra.aggiungiPulsante("Modifica", "modifica.png", e -> modifica());
+        barra.aggiungiPulsante("Elimina", "elimina.png", e -> elimina());
+        return barra;
     }
 
     private void nuovo() {

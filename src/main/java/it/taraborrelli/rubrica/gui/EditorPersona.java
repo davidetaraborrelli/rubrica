@@ -14,7 +14,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -59,8 +58,8 @@ public class EditorPersona extends JDialog {
             campoEta.setText(String.valueOf(originale.getEta()));
         }
 
+        add(creaBarraStrumenti(), BorderLayout.NORTH);
         add(creaModulo(), BorderLayout.CENTER);
-        add(creaPulsanti(), BorderLayout.SOUTH);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setResizable(false);
         pack();
@@ -102,20 +101,15 @@ public class EditorPersona extends JDialog {
         modulo.add(campo, vincoli);
     }
 
-    private JPanel creaPulsanti() {
-        JButton salva = new JButton("Salva");
-        JButton annulla = new JButton("Annulla");
-        salva.addActionListener(e -> salva());
-        annulla.addActionListener(e -> dispose());
+    private BarraStrumenti creaBarraStrumenti() {
+        BarraStrumenti barra = new BarraStrumenti();
+        JButton salva = barra.aggiungiPulsante("Salva", "salva.png", e -> salva());
+        barra.aggiungiPulsante("Annulla", "annulla.png", e -> dispose());
 
         getRootPane().setDefaultButton(salva);
         getRootPane().registerKeyboardAction(e -> dispose(),
                 KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        JPanel pulsanti = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pulsanti.add(salva);
-        pulsanti.add(annulla);
-        return pulsanti;
+        return barra;
     }
 
     private void salva() {

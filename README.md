@@ -2,14 +2,14 @@
 
 Rubrica telefonica desktop scritta in Java con Swing. Permette di aggiungere, modificare ed eliminare contatti; i dati sono salvati in un file di testo e ricaricati a ogni avvio.
 
-Ogni contatto ha nome, cognome, indirizzo, telefono ed età. La finestra principale mostra in una tabella nome, cognome e telefono; indirizzo ed età si vedono e si cambiano nell'editor.
+Ogni contatto ha nome, cognome, indirizzo, telefono ed età. La finestra principale mostra in una tabella nome, cognome e telefono; indirizzo ed età si vedono e si cambiano nell'editor. I comandi sono in una barra degli strumenti in cima a ogni finestra.
 
 ## Uso
 
-- **Nuovo** apre l'editor con i campi vuoti; **Modifica** lo apre con i dati della persona selezionata (si può anche fare doppio click sulla riga).
+- Dalla barra della finestra principale, **Nuovo** apre l'editor con i campi vuoti; **Modifica** lo apre con i dati della persona selezionata (si può anche fare doppio click sulla riga).
 - **Elimina** chiede conferma prima di rimuovere la persona selezionata.
 - Modifica ed Elimina senza una riga selezionata mostrano un messaggio d'errore.
-- Nell'editor **Salva** (o Invio) salva e chiude, **Annulla** (o Esc) chiude senza salvare.
+- Dalla barra dell'editor, **Salva** (o Invio) salva e chiude, **Annulla** (o Esc) chiude senza salvare.
 - Nome, cognome e telefono sono obbligatori, l'età deve essere un numero intero tra 0 e 150 e il carattere `;` non è ammesso.
 
 ## Requisiti
@@ -56,7 +56,7 @@ Il codice è nel package `it.taraborrelli.rubrica`:
 - `modello`: la classe `Persona`.
 - `logica`: `Rubrica`, la lista delle persone con aggiunta, modifica ed eliminazione.
 - `persistenza`: l'interfaccia `PersonaDao` e l'implementazione su file `FilePersonaDao`.
-- `gui`: finestra principale, editor della persona e modello della tabella.
+- `gui`: finestra principale, editor della persona, modello della tabella e barra degli strumenti.
 - `Main` avvia l'applicazione e crea le classi concrete.
 
 Scelte:
@@ -64,7 +64,12 @@ Scelte:
 - La GUI usa solo `Rubrica`, che conosce soltanto l'interfaccia `PersonaDao`: il salvataggio su file si può sostituire, per esempio con un database, senza toccare logica e interfaccia.
 - La lista è un `ArrayList` e non un `Vector`: la sincronizzazione non serve, perché tutto gira sul thread di Swing.
 - `PersonaTableModel` estende `AbstractTableModel` e legge direttamente la lista della rubrica; `DefaultTableModel` ne terrebbe una seconda copia.
+- La barra degli strumenti è una `JToolBar` non staccabile, costruita dalla stessa classe (`BarraStrumenti`) per le due finestre. I pulsanti hanno icona e testo, così restano chiari anche senza conoscere le icone.
 - Ogni inserimento, modifica o eliminazione riscrive l'intero file. La lista in memoria cambia solo dopo che il salvataggio è riuscito, così lista e file restano coerenti anche in caso di errore. `PrintStream` non lancia eccezioni, perciò dopo la scrittura si controlla `checkError()`.
 - Il `;` non è accettato nei campi perché romperebbe il formato del file.
 - I dati stanno accanto al jar e non nella cartella corrente: con il doppio click su Mac e Linux la cartella corrente può essere un'altra.
 - Il bytecode è per Java 8, così `Rubrica.jar` parte anche su installazioni di Java datate.
+
+## Icone
+
+Le icone della barra degli strumenti, in `src/main/resources/icone`, sono dei [Material Icons](https://github.com/google/material-design-icons) di Google, distribuiti con licenza [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0). Sono usate senza modifiche, nella versione da 18 px, con i file rinominati: `nuovo.png` è `person_add`, `modifica.png` è `edit`, `elimina.png` è `delete`, `salva.png` è `save`, `annulla.png` è `close`. Il testo della licenza è in `src/main/resources/icone/LICENSE.txt`.
