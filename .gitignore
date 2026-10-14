@@ -1,0 +1,10 @@
+# Output di Maven
+target/
+
+# File degli IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
