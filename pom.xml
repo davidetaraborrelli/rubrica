@@ -17,9 +17,25 @@
         <!-- Bytecode Java 8: il jar deve partire anche su JRE datate -->
         <maven.compiler.release>8</maven.compiler.release>
         <junit.version>5.14.4</junit.version>
+        <mysql.connector.version>26.7.0</mysql.connector.version>
+        <!-- Dalla 2.3 in poi H2 richiede Java 11: i test devono girare anche con un JDK 9 -->
+        <h2.version>2.2.224</h2.version>
     </properties>
 
     <dependencies>
+        <!-- Driver JDBC di MySQL, compilato per Java 8; finisce dentro Rubrica.jar -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${mysql.connector.version}</version>
+        </dependency>
+        <!-- Database in memoria per provare i DAO JDBC senza un MySQL acceso -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -60,6 +76,71 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+                <!-- Mette il driver MySQL dentro Rubrica.jar, così il pacchetto resta di quattro soli file -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <!-- Evita che il plugin scriva dependency-reduced-pom.xml nella cartella del progetto -->
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                                <!-- Resta il manifest di Rubrica.jar, quello con Main-Class -->
+                                <filter>
+                                    <artifact>com.mysql:mysql-connector-j</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.google.protobuf:protobuf-java</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <!-- Unisce META-INF/services, dove il driver si registra come java.sql.Driver -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- Crea target/Rubrica.zip con i file da consegnare, descritti in src/assembly/pacchetto.xml -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/pacchetto.xml</descriptor>
+                    </descriptors>
+                    <appendAssemblyId>false</appendAssemblyId>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

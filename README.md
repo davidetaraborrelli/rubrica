@@ -1,6 +1,6 @@
 # Rubrica
 
-Rubrica telefonica desktop scritta in Java con Swing. Permette di aggiungere, modificare ed eliminare contatti; i dati sono salvati in un file di testo e ricaricati a ogni avvio. L'accesso richiede utente e password.
+Rubrica telefonica desktop scritta in Java con Swing. Permette di aggiungere, modificare ed eliminare contatti; i dati sono salvati in file di testo, oppure su un database MySQL, e ricaricati a ogni avvio. L'accesso richiede utente e password.
 
 Ogni contatto ha nome, cognome, indirizzo, telefono ed età. La finestra principale mostra in una tabella nome, cognome e telefono; indirizzo ed età si vedono e si cambiano nell'editor. I comandi sono in una barra degli strumenti in cima alla finestra principale e all'editor.
 
@@ -17,6 +17,7 @@ Ogni contatto ha nome, cognome, indirizzo, telefono ed età. La finestra princip
 ## Requisiti
 
 - Per eseguire il programma: Java 8 o successivo.
+- Per il salvataggio su database: un server MySQL 8 o MariaDB. Il driver è già dentro `Rubrica.jar`.
 - Per compilarlo: JDK 9 o successivo (il codice è compilato per Java 8 con `--release 8`, opzione disponibile dal JDK 9) e Maven 3.6.3 o successivo. È stato sviluppato con JDK 21 e Maven 3.9.
 
 ## Compilazione
@@ -25,7 +26,7 @@ Ogni contatto ha nome, cognome, indirizzo, telefono ed età. La finestra princip
 mvn package
 ```
 
-Compila, esegue i test e crea `target/Rubrica.jar`. I soli test si lanciano con `mvn test`.
+Compila, esegue i test e crea `target/Rubrica.jar`, con il driver MySQL incluso, e `target/Rubrica.zip`, il pacchetto per il salvataggio su database. I soli test si lanciano con `mvn test`.
 
 ## Avvio
 
@@ -38,6 +39,16 @@ java -jar Rubrica.jar
 I dati sono nella stessa cartella di `Rubrica.jar`: `informazioni.txt` con le persone, creato al primo salvataggio, e `utenti.txt` con gli utenti, creato al primo avvio. Il jar si può spostare ovunque, portando con sé i due file per non perdere contatti e utenti. La cartella deve essere scrivibile.
 
 Avviando le classi da un IDE, senza jar, i file si trovano nella cartella corrente, cioè di norma la radice del progetto.
+
+## Salvataggio su database
+
+Se accanto a `Rubrica.jar` c'è il file `credenziali_database.properties`, persone e utenti si salvano su un database MySQL 8 o MariaDB invece che nei file di testo; senza quel file si usano i file. Se il database non è raggiungibile il programma mostra il motivo e si chiude, senza ripiegare in silenzio sui file.
+
+Il pacchetto `target/Rubrica.zip` contiene quattro file, presi da `Rubrica.jar` e dalla cartella `dist/`:
+
+- `schema_database.sql` crea il database `rubrica` con le tabelle `persone` e `utenti` e l'utente `admin`. Si può lanciare più volte.
+- `credenziali_database.properties` è il modello con username, password, indirizzo e porta del server, da compilare.
+- `LEGGIMI.txt` spiega i quattro passi: decomprimere, inserire le credenziali, lanciare lo script, eseguire il jar.
 
 ## Formato dei dati
 
@@ -65,19 +76,23 @@ Il codice è nel package `it.taraborrelli.rubrica`:
 
 - `modello`: le classi `Persona` e `Utente`.
 - `logica`: `Rubrica`, la lista delle persone con aggiunta, modifica ed eliminazione, e `Autenticazione`, che controlla le credenziali.
-- `persistenza`: le interfacce `PersonaDao` e `UtenteDao` e le implementazioni su file `FilePersonaDao` e `FileUtenteDao`.
+- `persistenza`: le interfacce `PersonaDao` e `UtenteDao`, le implementazioni su file `FilePersonaDao` e `FileUtenteDao` e quelle su database `JdbcPersonaDao` e `JdbcUtenteDao`, con `ConfigurazioneDatabase` che legge le credenziali e apre le connessioni.
 - `gui`: finestra di login, finestra principale, editor della persona, modello della tabella e barra degli strumenti.
-- `Main` avvia l'applicazione e crea le classi concrete.
+- `Main` avvia l'applicazione, sceglie tra file e database e crea le classi concrete.
 
 Scelte:
 
-- La GUI usa solo `Rubrica`, che conosce soltanto l'interfaccia `PersonaDao`: il salvataggio su file si può sostituire, per esempio con un database, senza toccare logica e interfaccia.
+- La GUI usa solo `Rubrica` e `Autenticazione`, che conoscono soltanto le interfacce `PersonaDao` e `UtenteDao`: il salvataggio su file e quello su database sono intercambiabili senza toccare logica e interfaccia, e a sceglierli è solo `Main`.
 - La lista è un `ArrayList` e non un `Vector`: la sincronizzazione non serve, perché tutto gira sul thread di Swing.
 - `PersonaTableModel` estende `AbstractTableModel` e legge direttamente la lista della rubrica; `DefaultTableModel` ne terrebbe una seconda copia.
 - La barra degli strumenti è una `JToolBar` non staccabile, costruita dalla stessa classe (`BarraStrumenti`) per le due finestre. I pulsanti hanno icona e testo, così restano chiari anche senza conoscere le icone.
 - Ogni inserimento, modifica o eliminazione riscrive l'intero file. La lista in memoria cambia solo dopo che il salvataggio è riuscito, così lista e file restano coerenti anche in caso di errore. `PrintStream` non lancia eccezioni, perciò dopo la scrittura si controlla `checkError()`.
 - Il `;` non è accettato nei campi perché romperebbe il formato del file.
 - Le password sono salvate come hash PBKDF2-HMAC-SHA256 con 600.000 iterazioni, il valore che l'OWASP raccomanda per questo algoritmo, e un salt casuale di 16 byte per ogni utente; servono solo classi del JDK. Il confronto è a tempo costante (`MessageDigest.isEqual`) e la password resta un `char[]` che si azzera dopo l'uso. Il numero di iterazioni è scritto nell'hash, quindi si può aumentare senza invalidare le password già salvate.
+- I DAO JDBC usano `PreparedStatement` e `try-with-resources`. Ogni operazione apre e chiude la propria connessione, così una connessione scaduta non può rovinare quelle successive; l'id lo genera il database.
+- Gli errori SQL più comuni (accesso negato, server irraggiungibile, database o tabelle mancanti) diventano messaggi che dicono cosa fare. La connessione ha un timeout di 5 secondi, per non restare appesi con un server spento.
+- Lo username ha la collation `utf8mb4_bin`, per distinguere maiuscole e minuscole come nel salvataggio su file.
+- I test dei DAO JDBC usano H2 in memoria, in modalità MySQL, e creano le tabelle con lo stesso `schema_database.sql` che si consegna. Lo script e il programma sono stati provati anche su MySQL 8.4 e su MariaDB 12.
 - `FinestraLogin` riceve da `Main` l'azione da eseguire dopo l'accesso e non conosce la finestra principale: l'ordine delle finestre lo decide `Main`. Persone e utenti si leggono prima di mostrare il login, così un file illeggibile si segnala subito.
 - I dati stanno accanto al jar e non nella cartella corrente: con il doppio click su Mac e Linux la cartella corrente può essere un'altra.
 - Il bytecode è per Java 8, così `Rubrica.jar` parte anche su installazioni di Java datate.
@@ -85,3 +100,7 @@ Scelte:
 ## Icone
 
 Le icone della barra degli strumenti, in `src/main/resources/icone`, sono dei [Material Icons](https://github.com/google/material-design-icons) di Google, distribuiti con licenza [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0). I file non sono modificati, solo rinominati: `nuovo.png` è `person_add`, `modifica.png` è `edit`, `elimina.png` è `delete`, `salva.png` è `save`, `annulla.png` è `close`. Sono nella versione da 18 dp a risoluzione doppia (36 px) e il programma le disegna a 18 px: così restano nitide anche con la scala dello schermo al 125% o 150%, dove un'immagine da 18 px verrebbe ingrandita pixel per pixel e risulterebbe sgranata. Il testo della licenza è in `src/main/resources/icone/LICENSE.txt`.
+
+## Driver MySQL
+
+Il driver JDBC è [MySQL Connector/J](https://dev.mysql.com/downloads/connector/j/) di Oracle, versione 26.7.0, compilato per Java 8. È distribuito con licenza GPL v2 con la Universal FOSS Exception e viene incluso in `Rubrica.jar` con il maven-shade-plugin, insieme a protobuf-java (licenza BSD a tre clausole), da cui dipende; il file `LICENSE` del driver resta nel jar.

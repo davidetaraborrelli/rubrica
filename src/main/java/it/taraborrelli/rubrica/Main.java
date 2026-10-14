@@ -4,8 +4,11 @@ import it.taraborrelli.rubrica.gui.FinestraLogin;
 import it.taraborrelli.rubrica.gui.FinestraPrincipale;
 import it.taraborrelli.rubrica.logica.Autenticazione;
 import it.taraborrelli.rubrica.logica.Rubrica;
+import it.taraborrelli.rubrica.persistenza.ConfigurazioneDatabase;
 import it.taraborrelli.rubrica.persistenza.FilePersonaDao;
 import it.taraborrelli.rubrica.persistenza.FileUtenteDao;
+import it.taraborrelli.rubrica.persistenza.JdbcPersonaDao;
+import it.taraborrelli.rubrica.persistenza.JdbcUtenteDao;
 import it.taraborrelli.rubrica.persistenza.PersistenzaException;
 
 import javax.swing.JOptionPane;
@@ -19,6 +22,7 @@ public class Main {
 
     private static final String FILE_PERSONE = "informazioni.txt";
     private static final String FILE_UTENTI = "utenti.txt";
+    private static final String FILE_CREDENZIALI = "credenziali_database.properties";
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Main::avvia);
@@ -27,17 +31,27 @@ public class Main {
     private static void avvia() {
         impostaAspetto();
         File cartella = cartellaApplicazione();
-        Rubrica rubrica = new Rubrica(new FilePersonaDao(new File(cartella, FILE_PERSONE)));
-        Autenticazione autenticazione = new Autenticazione(new FileUtenteDao(new File(cartella, FILE_UTENTI)));
+        File credenziali = new File(cartella, FILE_CREDENZIALI);
         try {
+            Rubrica rubrica;
+            Autenticazione autenticazione;
+            // Il file delle credenziali accanto al jar è ciò che attiva il salvataggio su database
+            if (credenziali.isFile()) {
+                ConfigurazioneDatabase database = ConfigurazioneDatabase.leggi(credenziali);
+                rubrica = new Rubrica(new JdbcPersonaDao(database));
+                autenticazione = new Autenticazione(new JdbcUtenteDao(database));
+            } else {
+                rubrica = new Rubrica(new FilePersonaDao(new File(cartella, FILE_PERSONE)));
+                autenticazione = new Autenticazione(new FileUtenteDao(new File(cartella, FILE_UTENTI)));
+            }
             autenticazione.creaUtenteIniziale();
             rubrica.carica();
+            new FinestraLogin(autenticazione, () -> new FinestraPrincipale(rubrica).setVisible(true)).setVisible(true);
         } catch (PersistenzaException e) {
-            // Aprire una rubrica vuota farebbe credere che i dati siano andati persi
+            // Una rubrica vuota, o i file al posto del database, farebbero credere che i dati siano andati persi
             JOptionPane.showMessageDialog(null, e.getMessage(), "Rubrica", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
-        new FinestraLogin(autenticazione, () -> new FinestraPrincipale(rubrica).setVisible(true)).setVisible(true);
     }
 
     /**
