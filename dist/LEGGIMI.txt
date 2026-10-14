@@ -42,5 +42,12 @@ Se qualcosa non funziona
 
 Senza database
   Se credenziali_database.properties non si trova nella stessa cartella di
-  Rubrica.jar, il programma salva su file di testo (informazioni.txt e
-  utenti.txt, creati accanto a Rubrica.jar) e non serve alcun database.
+  Rubrica.jar, il programma salva su file di testo e non serve alcun
+  database: le persone nella cartella informazioni, un file per persona
+  (Persona1.txt, Persona2.txt, ...), e gli utenti in utenti.txt, creati
+  accanto a Rubrica.jar.
+
+  Per usare i file anche con credenziali_database.properties nella stessa
+  cartella, avviare il programma da terminale:
+
+         java -jar Rubrica.jar cartella

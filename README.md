@@ -1,6 +1,6 @@
 # Rubrica
 
-Rubrica telefonica desktop scritta in Java con Swing. Permette di aggiungere, modificare ed eliminare contatti; i dati sono salvati in file di testo, oppure su un database MySQL, e ricaricati a ogni avvio. L'accesso richiede utente e password.
+Rubrica telefonica desktop scritta in Java con Swing. Permette di aggiungere, modificare ed eliminare contatti; i dati sono salvati in una cartella, un file di testo per persona, oppure su un database MySQL, e ricaricati a ogni avvio. L'accesso richiede utente e password.
 
 Ogni contatto ha nome, cognome, indirizzo, telefono ed età. La finestra principale mostra in una tabella nome, cognome e telefono; indirizzo ed età si vedono e si cambiano nell'editor. I comandi sono in una barra degli strumenti in cima alla finestra principale e all'editor.
 
@@ -36,13 +36,31 @@ Doppio click su `Rubrica.jar`, oppure:
 java -jar Rubrica.jar
 ```
 
-I dati sono nella stessa cartella di `Rubrica.jar`: `informazioni.txt` con le persone, creato al primo salvataggio, e `utenti.txt` con gli utenti, creato al primo avvio. Il jar si può spostare ovunque, portando con sé i due file per non perdere contatti e utenti. La cartella deve essere scrivibile.
+I dati sono nella stessa cartella di `Rubrica.jar`: la cartella `informazioni` con le persone, creata all'avvio se manca, e `utenti.txt` con gli utenti, creato al primo avvio. Il jar si può spostare ovunque, portando con sé la cartella e il file per non perdere contatti e utenti. La cartella che contiene il jar deve essere scrivibile.
 
-Avviando le classi da un IDE, senza jar, i file si trovano nella cartella corrente, cioè di norma la radice del progetto.
+Avviando le classi da un IDE, senza jar, la cartella e il file si trovano nella cartella corrente, cioè di norma la radice del progetto.
+
+## Salvataggio su file
+
+Le persone sono salvate nella cartella `informazioni`, un file per persona: `Persona1.txt`, `Persona2.txt` e così via. Ogni file ha una sola riga (formato in fondo). Il numero nel nome è l'id della persona: resta lo stesso a ogni avvio, e una persona nuova prende l'id più alto presente nella cartella più uno. Due persone con lo stesso nome e cognome stanno quindi in file diversi e non si sovrascrivono.
+
+- I file con un altro nome, comprese le versioni con zeri iniziali come `Persona01.txt`, sono ignorati.
+- Un file di persona che non si può leggere (campi sbagliati, vuoto, con più di una persona, non in UTF-8) fa comparire il motivo, con il nome del file, e il programma si chiude: una rubrica incompleta farebbe credere che i dati siano andati persi.
+- Se qualcuno cancella a mano il file di una persona mentre il programma è aperto, modificarla o eliminarla mostra un messaggio d'errore.
+
+Con un argomento si può scegliere un altro salvataggio:
+
+| Comando | Dove si salvano le persone |
+|---|---|
+| `java -jar Rubrica.jar` | nella cartella `informazioni`; su database se accanto al jar c'è `credenziali_database.properties` |
+| `java -jar Rubrica.jar cartella` | nella cartella `informazioni`, anche se accanto al jar c'è `credenziali_database.properties` |
+| `java -jar Rubrica.jar file` | tutte in un solo file, `informazioni.txt`, una per riga, mai su database |
+
+Un argomento è una richiesta esplicita e vale più del file delle credenziali. Con qualsiasi altro argomento il programma mostra l'uso corretto e si chiude. Gli utenti stanno sempre in `utenti.txt`, tranne che con il database. I salvataggi sono archivi separati: passare dall'uno all'altro non sposta i dati.
 
 ## Salvataggio su database
 
-Se accanto a `Rubrica.jar` c'è il file `credenziali_database.properties`, persone e utenti si salvano su un database MySQL 8 o MariaDB invece che nei file di testo; senza quel file si usano i file. Se il database non è raggiungibile il programma mostra il motivo e si chiude, senza ripiegare in silenzio sui file.
+Se accanto a `Rubrica.jar` c'è il file `credenziali_database.properties` e non si passa nessun argomento, persone e utenti si salvano su un database MySQL 8 o MariaDB invece che su file; senza quel file si usano i file. Se il database non è raggiungibile il programma mostra il motivo e si chiude, senza ripiegare in silenzio sui file.
 
 Il pacchetto `target/Rubrica.zip` contiene quattro file, presi da `Rubrica.jar` e dalla cartella `dist/`:
 
@@ -52,7 +70,7 @@ Il pacchetto `target/Rubrica.zip` contiene quattro file, presi da `Rubrica.jar` 
 
 ## Formato dei dati
 
-Una riga per persona, con nome, cognome, indirizzo, telefono ed età separati da `;`. Il file è in UTF-8.
+Ogni persona è una riga, con nome, cognome, indirizzo, telefono ed età separati da `;`. I file `Persona<id>.txt` hanno una riga sola; `informazioni.txt` (argomento `file`) ne ha una per persona, come in questo esempio. I file sono in UTF-8.
 
 ```
 Steve;Jobs;via Cupertino 13;0612344;56
@@ -60,7 +78,7 @@ Bill;Gates;via Redmond 10;06688989;60
 Babbo;Natale;via del Polo Nord;00000111;99
 ```
 
-Le righe vuote sono ignorate. Se una riga non è valida (campi diversi da cinque, età non numerica) il programma mostra il numero della riga e si chiude senza toccare il file. Si chiude allo stesso modo, indicando la causa, se il file non è in UTF-8. Aprire una rubrica vuota farebbe credere che i dati siano andati persi.
+Le righe vuote sono ignorate. Se una riga non è valida (campi diversi da cinque, età non numerica) il programma mostra il nome del file e il numero della riga e si chiude senza toccare i dati. Si chiude allo stesso modo, indicando la causa, se un file non è in UTF-8. Aprire una rubrica vuota o incompleta farebbe credere che i dati siano andati persi.
 
 `utenti.txt` ha una riga per utente, con username e hash della password separati da `;`. La password non è mai salvata in chiaro.
 
@@ -68,7 +86,7 @@ Le righe vuote sono ignorate. Se una riga non è valida (campi diversi da cinque
 admin;pbkdf2_sha256$600000$<salt>$<hash>
 ```
 
-L'hash ha il formato `pbkdf2_sha256$iterazioni$salt$hash`, con salt e hash in Base64. Per il resto valgono le regole di `informazioni.txt`: UTF-8, righe vuote ignorate, errore con il numero di riga.
+L'hash ha il formato `pbkdf2_sha256$iterazioni$salt$hash`, con salt e hash in Base64. Per il resto valgono le stesse regole: UTF-8, righe vuote ignorate, errore con il numero di riga.
 
 ## Struttura e scelte principali
 
@@ -76,17 +94,19 @@ Il codice è nel package `it.taraborrelli.rubrica`:
 
 - `modello`: le classi `Persona` e `Utente`.
 - `logica`: `Rubrica`, la lista delle persone con aggiunta, modifica ed eliminazione, e `Autenticazione`, che controlla le credenziali.
-- `persistenza`: le interfacce `PersonaDao` e `UtenteDao`, le implementazioni su file `FilePersonaDao` e `FileUtenteDao` e quelle su database `JdbcPersonaDao` e `JdbcUtenteDao`, con `ConfigurazioneDatabase` che legge le credenziali e apre le connessioni.
+- `persistenza`: le interfacce `PersonaDao` e `UtenteDao`; per le persone `CartellaPersonaDao` (un file per persona nella cartella `informazioni`), `FilePersonaDao` (tutte in `informazioni.txt`) e `JdbcPersonaDao`; per gli utenti `FileUtenteDao` (`utenti.txt`) e `JdbcUtenteDao`; `ConfigurazioneDatabase` legge le credenziali e apre le connessioni.
 - `gui`: finestra di login, finestra principale, editor della persona, modello della tabella e barra degli strumenti.
-- `Main` avvia l'applicazione, sceglie tra file e database e crea le classi concrete.
+- `Main` avvia l'applicazione, sceglie tra cartella, file singolo e database e crea le classi concrete.
 
 Scelte:
 
-- La GUI usa solo `Rubrica` e `Autenticazione`, che conoscono soltanto le interfacce `PersonaDao` e `UtenteDao`: il salvataggio su file e quello su database sono intercambiabili senza toccare logica e interfaccia, e a sceglierli è solo `Main`.
+- La GUI usa solo `Rubrica` e `Autenticazione`, che conoscono soltanto le interfacce `PersonaDao` e `UtenteDao`: il salvataggio in una cartella, in un file e su database sono intercambiabili senza toccare logica e interfaccia, e a sceglierli è solo `Main`.
 - La lista è un `ArrayList` e non un `Vector`: la sincronizzazione non serve, perché tutto gira sul thread di Swing.
 - `PersonaTableModel` estende `AbstractTableModel` e legge direttamente la lista della rubrica; `DefaultTableModel` ne terrebbe una seconda copia.
 - La barra degli strumenti è una `JToolBar` non staccabile, costruita dalla stessa classe (`BarraStrumenti`) per le due finestre. I pulsanti hanno icona e testo, così restano chiari anche senza conoscere le icone.
-- Ogni inserimento, modifica o eliminazione riscrive l'intero file. La lista in memoria cambia solo dopo che il salvataggio è riuscito, così lista e file restano coerenti anche in caso di errore. `PrintStream` non lancia eccezioni, perciò dopo la scrittura si controlla `checkError()`.
+- `CartellaPersonaDao` è il salvataggio predefinito, come chiede l'estensione del documento: non un singolo file, ma una cartella con un file per persona. Prende l'id dal nome del file: non serve un indice a parte, l'id è stabile tra un avvio e l'altro e il nome non dipende dai dati, quindi gli omonimi non si scontrano. Legge e scrive con `java.nio.file.Files`, che segnala gli errori con eccezioni e, con `CREATE_NEW`, non permette di sovrascrivere il file di un'altra persona.
+- `FilePersonaDao`, il salvataggio nel singolo `informazioni.txt` della parte base del documento, resta disponibile con l'argomento `file`. Ogni inserimento, modifica o eliminazione riscrive l'intero file, e `PrintStream` non lancia eccezioni, perciò dopo la scrittura si controlla `checkError()`.
+- In ogni salvataggio la lista in memoria cambia solo dopo che la scrittura è riuscita, così lista e dati restano coerenti anche in caso di errore.
 - Il `;` non è accettato nei campi perché romperebbe il formato del file.
 - Le password sono salvate come hash PBKDF2-HMAC-SHA256 con 600.000 iterazioni, il valore che l'OWASP raccomanda per questo algoritmo, e un salt casuale di 16 byte per ogni utente; servono solo classi del JDK. Il confronto è a tempo costante (`MessageDigest.isEqual`) e la password resta un `char[]` che si azzera dopo l'uso. Il numero di iterazioni è scritto nell'hash, quindi si può aumentare senza invalidare le password già salvate.
 - I DAO JDBC usano `PreparedStatement` e `try-with-resources`. Ogni operazione apre e chiude la propria connessione, così una connessione scaduta non può rovinare quelle successive; l'id lo genera il database.

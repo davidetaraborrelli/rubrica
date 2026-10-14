@@ -11,6 +11,7 @@ target/
 
 # Dati generati dall'applicazione
 informazioni.txt
+informazioni/
 utenti.txt
 
 # Copia locale con le credenziali vere del database (il modello da consegnare è in dist/)
